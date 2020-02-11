@@ -1,0 +1,220 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: RocketCX Enterprise Connector for ServiceNow Quickstart.
+
+Transform: AWS::Serverless-2016-10-31
+
+Metadata:
+
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Amazon Connect configuration
+        Parameters:
+          - pConnectInstanceId
+      - Label:
+          default: ServiceNow configuration
+        Parameters:
+          - pServiceNowUserName
+          - pServiceNowPassword
+          - pServiceNowHost
+
+Parameters:
+
+  pConnectInstanceId:
+    AllowedPattern: ^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$
+    ConstraintDescription: Amazon Connect instance ID contains upper and lower case letters, numbers and dashes (-).
+    Description: Amazon Connect instance ID
+    Type: String
+
+  pServiceNowUserName:
+    Description: ServiceNow User Name
+    Type: String
+
+  pServiceNowPassword:
+    Description: ServiceNow Password
+    NoEcho: true
+    Type: String
+
+  pServiceNowHost:
+    AllowedPattern: ^https[://]+[a-zA-Z0-9-.]+[.]service-now.com/$
+    ConstraintDescription: Endpoint must be a valid ServiceNow API Host URI.
+    Description: ServiceNow Host (https://example.service-now.com/)
+    Type: String
+
+Globals:
+
+  Function:
+    Runtime: python3.7
+    Timeout: 15
+
+Resources:
+
+  rLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  rGetCallerLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: get_caller
+      Description: Lambda funciton to get caller details from ServiceNow DB.
+      Handler: lambda_function.lambda_handler
+      Environment:
+        Variables:
+          SERVICENOW_HOST: !Ref pServiceNowHost
+          SERVICENOW_USER: !Ref pServiceNowUserName
+          SERVICENOW_PASSWORD: !Ref pServiceNowPassword
+      CodeUri:
+        Bucket: rocketcx-resources
+        Key: EnterpriseConnectorServiceNow/lambda/Package/get_caller.zip
+      Role: !GetAtt rLambdaExecutionRole.Arn
+      
+  rGetCallerLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt rGetCallerLambda.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: connect.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: 
+        !Join
+          - ''
+          - - 'arn:aws:connect:'
+            - !Ref 'AWS::Region'
+            - ':'
+            - !Ref 'AWS::AccountId'
+            - ':'
+            - 'instance/'
+            - !Ref 'pConnectInstanceId'
+
+  rGetRecordsLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: get_records
+      Description: Lambda function to get record details from ServiceNow.
+      Handler: lambda_function.lambda_handler
+      Environment:
+        Variables:
+          SERVICENOW_HOST: !Ref pServiceNowHost
+          SERVICENOW_USER: !Ref pServiceNowUserName
+          SERVICENOW_PASSWORD: !Ref pServiceNowPassword
+      CodeUri:
+        Bucket: rocketcx-resources
+        Key: EnterpriseConnectorServiceNow/lambda/Package/get_records.zip
+      Role: !GetAtt rLambdaExecutionRole.Arn
+
+  rGetRecordsLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt rGetRecordsLambda.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: connect.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: 
+        !Join
+          - ''
+          - - 'arn:aws:connect:'
+            - !Ref 'AWS::Region'
+            - ':'
+            - !Ref 'AWS::AccountId'
+            - ':'
+            - 'instance/'
+            - !Ref 'pConnectInstanceId'
+
+  rSearchRecordLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: search_record
+      Description: Lambda function to search record details in ServiceNow.
+      Handler: lambda_function.lambda_handler
+      Environment:
+        Variables:
+          SERVICENOW_HOST: !Ref pServiceNowHost
+          SERVICENOW_USER: !Ref pServiceNowUserName
+          SERVICENOW_PASSWORD: !Ref pServiceNowPassword
+      CodeUri:
+        Bucket: rocketcx-resources
+        Key: EnterpriseConnectorServiceNow/lambda/Package/search_record.zip
+      Role: !GetAtt rLambdaExecutionRole.Arn  
+ 
+  rSearchRecordLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt rSearchRecordLambda.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: connect.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: 
+        !Join
+          - ''
+          - - 'arn:aws:connect:'
+            - !Ref 'AWS::Region'
+            - ':'
+            - !Ref 'AWS::AccountId'
+            - ':'
+            - 'instance/'
+            - !Ref 'pConnectInstanceId'
+
+  rSurveyFeebbackLambda:
+      Type: AWS::Serverless::Function
+      Properties:
+        FunctionName: survey_feedback
+        Description: Lambda function to update SNOW DB with collected feedback from customer
+        Handler: lambda_function.lambda_handler
+        Environment:
+            Variables:
+              SERVICENOW_HOST: !Ref pServiceNowHost
+              SERVICENOW_USER: !Ref pServiceNowUserName
+              SERVICENOW_PASSWORD: !Ref pServiceNowPassword
+        CodeUri:
+          Bucket: rocketcx-resources
+          Key: EnterpriseConnectorServiceNow/lambda/Package/survey_feedback.zip
+        Role: !GetAtt rLambdaExecutionRole.Arn  
+ 
+  rSurveyFeebbackLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt rSurveyFeebbackLambda.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: connect.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: 
+        !Join
+          - ''
+          - - 'arn:aws:connect:'
+            - !Ref 'AWS::Region'
+            - ':'
+            - !Ref 'AWS::AccountId'
+            - ':'
+            - 'instance/'
+            - !Ref 'pConnectInstanceId'
+
+Outputs:
+
+  GetCallerLambdaArn:
+    Description: Arn for get_caller lambda.
+    Value: !GetAtt rGetCallerLambda.Arn
+
+  GetRecordsLambdaArn:
+    Description: Arn for get_records lambda.
+    Value: !GetAtt rGetRecordsLambda.Arn
+
+  SearchRecordLambdaArn:
+    Description: Arn for search_record lambda.
+    Value: !GetAtt rSearchRecordLambda.Arn
+
+  SurveyFeebbackLambdaArn:
+    Description: Arn for survey_feedback lambda.
+    Value: !GetAtt rSurveyFeebbackLambda.Arn
