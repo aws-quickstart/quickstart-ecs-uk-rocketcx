@@ -15,31 +15,41 @@ Metadata:
       - Label:
           default: ServiceNow configuration
         Parameters:
+          - pServiceNowHost
           - pServiceNowUserName
           - pServiceNowPassword
-          - pServiceNowHost
+          
+    ParameterLabels:
+      pConnectInstanceId:
+        default: "Amazon Connect instance ID for integration with ServiceNow"
+      pServiceNowHost:
+        default: "ServiceNow instance URL for lambda data dip"
+      pServiceNowUserName:
+        default: "ServiceNow instance user name for lambda data dip"
+      pServiceNowPassword:
+        default: "ServiceNow instance user password for lambda data dip"
+      
 
 Parameters:
 
   pConnectInstanceId:
-    AllowedPattern: ^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$
-    ConstraintDescription: Amazon Connect instance ID contains upper and lower case letters, numbers and dashes (-).
+    ConstraintDescription: Amazon Connect instance ID is 36 char long and contains upper and lower case letters, numbers and dashes (-).
     Description: Amazon Connect instance ID
     Type: String
 
   pServiceNowUserName:
-    Description: ServiceNow User Name
+    Description: ServiceNow instance User Name with API invoke access permissions
     Type: String
 
   pServiceNowPassword:
-    Description: ServiceNow Password
+    Description: ServiceNow instance User Password with API invoke access permissions
     NoEcho: true
     Type: String
 
   pServiceNowHost:
     AllowedPattern: ^https[://]+[a-zA-Z0-9-.]+[.]service-now.com/$
     ConstraintDescription: Endpoint must be a valid ServiceNow API Host URI.
-    Description: ServiceNow Host (https://example.service-now.com/)
+    Description: ServiceNow Host URL (https://example.service-now.com/)
     Type: String
 
 Globals:

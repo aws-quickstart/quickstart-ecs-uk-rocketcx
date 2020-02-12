@@ -1,0 +1,18 @@
+[
+    {
+        "ParameterKey": "pConnectInstanceId",
+        "ParameterValue": "eb4b7ed5-054f-4994-8fc4-b091fddceb85"
+    },
+    {
+        "ParameterKey": "pServiceNowHost",
+        "ParameterValue": "https://dummyservicenow.service-now.com/"
+    },
+    {
+        "ParameterKey": "pServiceNowUserName",
+        "ParameterValue": "dummy.user"
+    },
+    {
+        "ParameterKey": "pServiceNowPassword",
+        "ParameterValue": "dummypassword"
+    }
+]
