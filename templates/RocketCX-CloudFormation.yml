@@ -57,8 +57,110 @@ Globals:
   Function:
     Runtime: python3.7
     Timeout: 15
-
+    
 Resources:
+
+  rLambdaZipsBucket:
+    Type: AWS::S3::Bucket
+
+  rCopyZips:
+    Type: Custom::CopyZips
+    Properties:
+      ServiceToken: !GetAtt 'rCopyZipsFunction.Arn'
+      DestBucket: !Ref 'rLambdaZipsBucket'
+      SourceBucket: 'rocketcx-resources'
+      Objects:
+        - EnterpriseConnectorServiceNow/lambda/Package/get_caller.zip
+        - EnterpriseConnectorServiceNow/lambda/Package/get_records.zip
+        - EnterpriseConnectorServiceNow/lambda/Package/search_record.zip
+        - EnterpriseConnectorServiceNow/lambda/Package/survey_feedback.zip
+
+  rCopyZipsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Path: /
+      Policies:
+        - PolicyName: lambda-copier
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource:
+                  - arn:aws:s3:::rocketcx-resources*
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource:
+                  - !Sub 'arn:aws:s3:::${rLambdaZipsBucket}*'
+
+  rCopyZipsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Copies objects from a source S3 bucket to a destination
+      Handler: index.handler
+      Runtime: python3.7
+      Role: !GetAtt 'rCopyZipsRole.Arn'
+      Timeout: 240
+      Code:
+        ZipFile: |
+          import json
+          import logging
+          import threading
+          import boto3
+          import cfnresponse
+          def copy_objects(source_bucket, dest_bucket, objects):
+              s3 = boto3.client('s3')
+              for o in objects:
+                  copy_source = {
+                      'Bucket': source_bucket,
+                      'Key': o
+                  }
+                  print('copy_source: %s' % copy_source)
+                  print('dest_bucket = %s'%dest_bucket)
+                  print('object = %s' %o)
+                  s3.copy_object(CopySource=copy_source, Bucket=dest_bucket,
+                        Key=o)
+          def delete_objects(bucket, objects):
+              s3 = boto3.client('s3')
+              objects = {'Objects': [{'Key': o} for o in objects]}
+              s3.delete_objects(Bucket=bucket, Delete=objects)
+          def timeout(event, context):
+              logging.error('Execution is about to time out, sending failure response to CloudFormation')
+              cfnresponse.send(event, context, cfnresponse.FAILED, {}, None)
+          def handler(event, context):
+              # make sure we send a failure to CloudFormation if the function
+              # is going to timeout
+              timer = threading.Timer((context.get_remaining_time_in_millis()
+                        / 1000.00) - 0.5, timeout, args=[event, context])
+              timer.start()
+              print('Received event: %s' % json.dumps(event))
+              status = cfnresponse.SUCCESS
+              try:
+                  source_bucket = event['ResourceProperties']['SourceBucket']
+                  dest_bucket = event['ResourceProperties']['DestBucket']
+                  objects = event['ResourceProperties']['Objects']
+                  if event['RequestType'] == 'Delete':
+                      delete_objects(dest_bucket, objects)
+                  else:
+                      copy_objects(source_bucket, dest_bucket, objects)
+              except Exception as e:
+                  logging.error('Exception: %s' % e, exc_info=True)
+                  status = cfnresponse.FAILED
+              finally:
+                  timer.cancel()
+                  cfnresponse.send(event, context, status, {}, None)
 
   rLambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -76,6 +178,7 @@ Resources:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
   rGetCallerLambda:
+    DependsOn: rCopyZips
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: get_caller
@@ -87,7 +190,7 @@ Resources:
           SERVICENOW_USER: !Ref pServiceNowUserName
           SERVICENOW_PASSWORD: !Ref pServiceNowPassword
       CodeUri:
-        Bucket: rocketcx-resources
+        Bucket: !Ref rLambdaZipsBucket
         Key: EnterpriseConnectorServiceNow/lambda/Package/get_caller.zip
       Role: !GetAtt rLambdaExecutionRole.Arn
       
@@ -110,6 +213,7 @@ Resources:
             - !Ref 'pConnectInstanceId'
 
   rGetRecordsLambda:
+    DependsOn: rCopyZips
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: get_records
@@ -121,7 +225,7 @@ Resources:
           SERVICENOW_USER: !Ref pServiceNowUserName
           SERVICENOW_PASSWORD: !Ref pServiceNowPassword
       CodeUri:
-        Bucket: rocketcx-resources
+        Bucket: !Ref rLambdaZipsBucket
         Key: EnterpriseConnectorServiceNow/lambda/Package/get_records.zip
       Role: !GetAtt rLambdaExecutionRole.Arn
 
@@ -144,6 +248,7 @@ Resources:
             - !Ref 'pConnectInstanceId'
 
   rSearchRecordLambda:
+    DependsOn: rCopyZips
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: search_record
@@ -155,7 +260,7 @@ Resources:
           SERVICENOW_USER: !Ref pServiceNowUserName
           SERVICENOW_PASSWORD: !Ref pServiceNowPassword
       CodeUri:
-        Bucket: rocketcx-resources
+        Bucket: !Ref rLambdaZipsBucket
         Key: EnterpriseConnectorServiceNow/lambda/Package/search_record.zip
       Role: !GetAtt rLambdaExecutionRole.Arn  
  
@@ -178,20 +283,21 @@ Resources:
             - !Ref 'pConnectInstanceId'
 
   rSurveyFeebbackLambda:
-      Type: AWS::Serverless::Function
-      Properties:
-        FunctionName: survey_feedback
-        Description: Lambda function to update SNOW DB with collected feedback from customer
-        Handler: lambda_function.lambda_handler
-        Environment:
-            Variables:
-              SERVICENOW_HOST: !Ref pServiceNowHost
-              SERVICENOW_USER: !Ref pServiceNowUserName
-              SERVICENOW_PASSWORD: !Ref pServiceNowPassword
-        CodeUri:
-          Bucket: rocketcx-resources
-          Key: EnterpriseConnectorServiceNow/lambda/Package/survey_feedback.zip
-        Role: !GetAtt rLambdaExecutionRole.Arn  
+    DependsOn: rCopyZips
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: survey_feedback
+      Description: Lambda function to update SNOW DB with collected feedback from customer
+      Handler: lambda_function.lambda_handler
+      Environment:
+          Variables:
+            SERVICENOW_HOST: !Ref pServiceNowHost
+            SERVICENOW_USER: !Ref pServiceNowUserName
+            SERVICENOW_PASSWORD: !Ref pServiceNowPassword
+      CodeUri:
+        Bucket: !Ref rLambdaZipsBucket
+        Key: EnterpriseConnectorServiceNow/lambda/Package/survey_feedback.zip
+      Role: !GetAtt rLambdaExecutionRole.Arn  
  
   rSurveyFeebbackLambdaInvokePermission:
     Type: AWS::Lambda::Permission
