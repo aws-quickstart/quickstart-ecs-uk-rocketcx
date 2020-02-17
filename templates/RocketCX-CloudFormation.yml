@@ -18,7 +18,11 @@ Metadata:
           - pServiceNowHost
           - pServiceNowUserName
           - pServiceNowPassword
-          
+      - Label:
+          default: (Optional) security configuration
+        Parameters:     
+          - pIAMUserName
+          - pS3BucketName
     ParameterLabels:
       pConnectInstanceId:
         default: "Amazon Connect instance ID for integration with ServiceNow"
@@ -28,13 +32,16 @@ Metadata:
         default: "ServiceNow instance user name for lambda data dip"
       pServiceNowPassword:
         default: "ServiceNow instance user password for lambda data dip"
+      pIAMUserName:
+        default: " (Optional) IAM user name to access Amazon connect stats and call recordings"
+      pS3BucketName:
+        default: " (Optional) Amazon connect call recording S3 bucket name"
       
 
 Parameters:
 
   pConnectInstanceId:
-    ConstraintDescription: Amazon Connect instance ID is 36 char long and contains upper and lower case letters, numbers and dashes (-).
-    Description: Amazon Connect instance ID
+    Description: Amazon Connect instance ID is 36 char long unique ID.
     Type: String
 
   pServiceNowUserName:
@@ -52,11 +59,30 @@ Parameters:
     Description: ServiceNow Host URL (https://example.service-now.com/)
     Type: String
 
+  pIAMUserName:
+    Description: IAM user Name used for accessing Amazon connect stats and call recordings
+    Type: String
+
+  pS3BucketName:
+    Description: Amazon connect s3 bucket name holding Amazon connect call recordings
+    Type: String
+
+
 Globals:
 
   Function:
     Runtime: python3.7
     Timeout: 15
+
+
+Conditions: 
+
+  cS3BucketName: !Not [!Equals [!Ref pS3BucketName, ""]]
+  cIAMUserName: !Not [!Equals [!Ref pIAMUserName, ""]]
+  cPolicyDeployment: !And
+    - !Condition cS3BucketName
+    - !Condition cIAMUserName
+
     
 Resources:
 
@@ -316,6 +342,72 @@ Resources:
             - ':'
             - 'instance/'
             - !Ref 'pConnectInstanceId'
+
+  rS3APIPolicy:
+    Type: AWS::IAM::Policy
+    Condition: cPolicyDeployment
+    Properties: 
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:GetObject'
+              - 's3:ListBucket'
+            Resource:
+              - !Join
+                  - ''
+                  - - 'arn:aws:s3:::'
+                    - !Ref pS3BucketName
+              - !Join
+                  - ''
+                  - - 'arn:aws:s3:::'
+                    - !Ref pS3BucketName
+                    - '/*'
+      PolicyName: !Join
+                  - ''
+                  - - 'cti_s3_api-'
+                    - !Ref 'AWS::Region' 
+      Users: 
+        - !Ref 'pIAMUserName'
+
+  rConnectPolicy:
+    Type: AWS::IAM::Policy
+    Condition: cPolicyDeployment
+    Properties: 
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'connect:GetMetricData'
+              - 'connect:GetCurrentMetricData'
+              - 'connect:UpdateContactAttributes'
+              - 'connect:GetContactAttributes'
+            Resource: '*'
+      PolicyName: !Join
+                  - ''
+                  - - 'cti_connect_api-'
+                    - !Ref 'AWS::Region' 
+      Users: 
+        - !Ref 'pIAMUserName'
+
+  rSTSPolicy:
+    Type: AWS::IAM::Policy
+    Condition: cPolicyDeployment
+    Properties: 
+      PolicyDocument:    
+        Version: 2012-10-17
+        Statement:
+          - Effect: 'Allow'
+            Action: 'sts:GetFederationToken'
+            Resource: '*'
+      PolicyName: !Join
+                  - ''
+                  - - 'cti_sts_api-'
+                    - !Ref 'AWS::Region'
+      Users: 
+        - !Ref 'pIAMUserName'
 
 Outputs:
 

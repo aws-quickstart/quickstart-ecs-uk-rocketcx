@@ -14,5 +14,14 @@
     {
         "ParameterKey": "pServiceNowPassword",
         "ParameterValue": "dummypassword"
+    },
+    {
+        "ParameterKey": "pIAMUserName",
+        "ParameterValue": ""
+    },
+    {
+        "ParameterKey": "pS3BucketName",
+        "ParameterValue": ""
     }
+
 ]
