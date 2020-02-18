@@ -11,60 +11,60 @@ Metadata:
       - Label:
           default: Amazon Connect configuration
         Parameters:
-          - pConnectInstanceId
+          - AmazonConnectInstanceID
       - Label:
           default: ServiceNow configuration
         Parameters:
-          - pServiceNowHost
-          - pServiceNowUserName
-          - pServiceNowPassword
+          - ServiceNowHostURL
+          - ServiceNowUserName
+          - ServiceNowPassword
       - Label:
-          default: (Optional) security configuration
+          default: Security configuration (optional)
         Parameters:     
-          - pIAMUserName
-          - pS3BucketName
+          - IAMUserName
+          - CallRecordingS3BucketName
     ParameterLabels:
-      pConnectInstanceId:
+      AmazonConnectInstanceID:
         default: "Amazon Connect instance ID for integration with ServiceNow"
-      pServiceNowHost:
+      ServiceNowHostURL:
         default: "ServiceNow instance URL for lambda data dip"
-      pServiceNowUserName:
+      ServiceNowUserName:
         default: "ServiceNow instance user name for lambda data dip"
-      pServiceNowPassword:
+      ServiceNowPassword:
         default: "ServiceNow instance user password for lambda data dip"
-      pIAMUserName:
-        default: " (Optional) IAM user name to access Amazon connect stats and call recordings"
-      pS3BucketName:
-        default: " (Optional) Amazon connect call recording S3 bucket name"
+      IAMUserName:
+        default: "IAM user name to access Amazon Connect stats and call recordings"
+      CallRecordingS3BucketName:
+        default: "Amazon Connect call recording S3 bucket name"
       
 
 Parameters:
 
-  pConnectInstanceId:
-    Description: Amazon Connect instance ID is 36 char long unique ID.
+  AmazonConnectInstanceID:
+    Description: Amazon Connect instance ID (36 char long unique ID from Amazon Connect ARN)
     Type: String
 
-  pServiceNowUserName:
-    Description: ServiceNow instance User Name with API invoke access permissions
+  ServiceNowUserName:
+    Description: The name of user having API invoke access permissions on ServiceNow instance
     Type: String
 
-  pServiceNowPassword:
-    Description: ServiceNow instance User Password with API invoke access permissions
+  ServiceNowPassword:
+    Description: The password of user having API invoke access permissions on ServiceNow instance
     NoEcho: true
     Type: String
 
-  pServiceNowHost:
+  ServiceNowHostURL:
     AllowedPattern: ^https[://]+[a-zA-Z0-9-.]+[.]service-now.com/$
     ConstraintDescription: Endpoint must be a valid ServiceNow API Host URI.
-    Description: ServiceNow Host URL (https://example.service-now.com/)
+    Description: Sample ServiceNow instance URL (https://example.service-now.com/)
     Type: String
 
-  pIAMUserName:
-    Description: IAM user Name used for accessing Amazon connect stats and call recordings
+  IAMUserName:
+    Description: (Optional) The name of IAM user used for accessing Amazon Connect stats and call recordings
     Type: String
 
-  pS3BucketName:
-    Description: Amazon connect s3 bucket name holding Amazon connect call recordings
+  CallRecordingS3BucketName:
+    Description: (Optional) The name of S3 bucket that stores Amazon Connect call recordings
     Type: String
 
 
@@ -77,10 +77,10 @@ Globals:
 
 Conditions: 
 
-  cS3BucketName: !Not [!Equals [!Ref pS3BucketName, ""]]
-  cIAMUserName: !Not [!Equals [!Ref pIAMUserName, ""]]
+  cCallRecordingS3BucketName: !Not [!Equals [!Ref CallRecordingS3BucketName, ""]]
+  cIAMUserName: !Not [!Equals [!Ref IAMUserName, ""]]
   cPolicyDeployment: !And
-    - !Condition cS3BucketName
+    - !Condition cCallRecordingS3BucketName
     - !Condition cIAMUserName
 
     
@@ -212,9 +212,9 @@ Resources:
       Handler: lambda_function.lambda_handler
       Environment:
         Variables:
-          SERVICENOW_HOST: !Ref pServiceNowHost
-          SERVICENOW_USER: !Ref pServiceNowUserName
-          SERVICENOW_PASSWORD: !Ref pServiceNowPassword
+          SERVICENOW_HOST: !Ref ServiceNowHostURL
+          SERVICENOW_USER: !Ref ServiceNowUserName
+          SERVICENOW_PASSWORD: !Ref ServiceNowPassword
       CodeUri:
         Bucket: !Ref rLambdaZipsBucket
         Key: EnterpriseConnectorServiceNow/lambda/Package/get_caller.zip
@@ -236,7 +236,7 @@ Resources:
             - !Ref 'AWS::AccountId'
             - ':'
             - 'instance/'
-            - !Ref 'pConnectInstanceId'
+            - !Ref 'AmazonConnectInstanceID'
 
   rGetRecordsLambda:
     DependsOn: rCopyZips
@@ -247,9 +247,9 @@ Resources:
       Handler: lambda_function.lambda_handler
       Environment:
         Variables:
-          SERVICENOW_HOST: !Ref pServiceNowHost
-          SERVICENOW_USER: !Ref pServiceNowUserName
-          SERVICENOW_PASSWORD: !Ref pServiceNowPassword
+          SERVICENOW_HOST: !Ref ServiceNowHostURL
+          SERVICENOW_USER: !Ref ServiceNowUserName
+          SERVICENOW_PASSWORD: !Ref ServiceNowPassword
       CodeUri:
         Bucket: !Ref rLambdaZipsBucket
         Key: EnterpriseConnectorServiceNow/lambda/Package/get_records.zip
@@ -271,7 +271,7 @@ Resources:
             - !Ref 'AWS::AccountId'
             - ':'
             - 'instance/'
-            - !Ref 'pConnectInstanceId'
+            - !Ref 'AmazonConnectInstanceID'
 
   rSearchRecordLambda:
     DependsOn: rCopyZips
@@ -282,9 +282,9 @@ Resources:
       Handler: lambda_function.lambda_handler
       Environment:
         Variables:
-          SERVICENOW_HOST: !Ref pServiceNowHost
-          SERVICENOW_USER: !Ref pServiceNowUserName
-          SERVICENOW_PASSWORD: !Ref pServiceNowPassword
+          SERVICENOW_HOST: !Ref ServiceNowHostURL
+          SERVICENOW_USER: !Ref ServiceNowUserName
+          SERVICENOW_PASSWORD: !Ref ServiceNowPassword
       CodeUri:
         Bucket: !Ref rLambdaZipsBucket
         Key: EnterpriseConnectorServiceNow/lambda/Package/search_record.zip
@@ -306,7 +306,7 @@ Resources:
             - !Ref 'AWS::AccountId'
             - ':'
             - 'instance/'
-            - !Ref 'pConnectInstanceId'
+            - !Ref 'AmazonConnectInstanceID'
 
   rSurveyFeebbackLambda:
     DependsOn: rCopyZips
@@ -317,9 +317,9 @@ Resources:
       Handler: lambda_function.lambda_handler
       Environment:
           Variables:
-            SERVICENOW_HOST: !Ref pServiceNowHost
-            SERVICENOW_USER: !Ref pServiceNowUserName
-            SERVICENOW_PASSWORD: !Ref pServiceNowPassword
+            SERVICENOW_HOST: !Ref ServiceNowHostURL
+            SERVICENOW_USER: !Ref ServiceNowUserName
+            SERVICENOW_PASSWORD: !Ref ServiceNowPassword
       CodeUri:
         Bucket: !Ref rLambdaZipsBucket
         Key: EnterpriseConnectorServiceNow/lambda/Package/survey_feedback.zip
@@ -341,7 +341,7 @@ Resources:
             - !Ref 'AWS::AccountId'
             - ':'
             - 'instance/'
-            - !Ref 'pConnectInstanceId'
+            - !Ref 'AmazonConnectInstanceID'
 
   rS3APIPolicy:
     Type: AWS::IAM::Policy
@@ -358,18 +358,18 @@ Resources:
               - !Join
                   - ''
                   - - 'arn:aws:s3:::'
-                    - !Ref pS3BucketName
+                    - !Ref CallRecordingS3BucketName
               - !Join
                   - ''
                   - - 'arn:aws:s3:::'
-                    - !Ref pS3BucketName
+                    - !Ref CallRecordingS3BucketName
                     - '/*'
       PolicyName: !Join
                   - ''
                   - - 'cti_s3_api-'
                     - !Ref 'AWS::Region' 
       Users: 
-        - !Ref 'pIAMUserName'
+        - !Ref 'IAMUserName'
 
   rConnectPolicy:
     Type: AWS::IAM::Policy
@@ -390,7 +390,7 @@ Resources:
                   - - 'cti_connect_api-'
                     - !Ref 'AWS::Region' 
       Users: 
-        - !Ref 'pIAMUserName'
+        - !Ref 'IAMUserName'
 
   rSTSPolicy:
     Type: AWS::IAM::Policy
@@ -407,22 +407,22 @@ Resources:
                   - - 'cti_sts_api-'
                     - !Ref 'AWS::Region'
       Users: 
-        - !Ref 'pIAMUserName'
+        - !Ref 'IAMUserName'
 
 Outputs:
 
   GetCallerLambdaArn:
-    Description: Arn for get_caller lambda.
+    Description: ARN for get_caller lambda.
     Value: !GetAtt rGetCallerLambda.Arn
 
   GetRecordsLambdaArn:
-    Description: Arn for get_records lambda.
+    Description: ARN for get_records lambda.
     Value: !GetAtt rGetRecordsLambda.Arn
 
   SearchRecordLambdaArn:
-    Description: Arn for search_record lambda.
+    Description: ARN for search_record lambda.
     Value: !GetAtt rSearchRecordLambda.Arn
 
   SurveyFeebbackLambdaArn:
-    Description: Arn for survey_feedback lambda.
+    Description: ARN for survey_feedback lambda.
     Value: !GetAtt rSurveyFeebbackLambda.Arn
