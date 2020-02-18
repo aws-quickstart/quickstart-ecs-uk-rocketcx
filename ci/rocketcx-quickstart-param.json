@@ -1,26 +1,26 @@
 [
     {
-        "ParameterKey": "pConnectInstanceId",
+        "ParameterKey": "AmazonConnectInstanceID",
         "ParameterValue": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
     },
     {
-        "ParameterKey": "pServiceNowHost",
+        "ParameterKey": "ServiceNowHostURL",
         "ParameterValue": "https://dummyservicenow.service-now.com/"
     },
     {
-        "ParameterKey": "pServiceNowUserName",
+        "ParameterKey": "ServiceNowUserName",
         "ParameterValue": "dummy.user"
     },
     {
-        "ParameterKey": "pServiceNowPassword",
+        "ParameterKey": "ServiceNowPassword",
         "ParameterValue": "dummypassword"
     },
     {
-        "ParameterKey": "pIAMUserName",
+        "ParameterKey": "IAMUserName",
         "ParameterValue": ""
     },
     {
-        "ParameterKey": "pS3BucketName",
+        "ParameterKey": "CallRecordingS3BucketName",
         "ParameterValue": ""
     }
 
