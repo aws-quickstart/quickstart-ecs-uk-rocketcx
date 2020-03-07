@@ -41,7 +41,7 @@ Metadata:
 Parameters:
 
   AmazonConnectInstanceID:
-    Description: Amazon Connect instance ID for integration with ServiceNow (maximum of 36 alphanumeric characters. This
+    Description: Amazon Connect instance ID for integration with ServiceNow (maximum of 36 alphanumeric characters). This
                  ID is different from the Amazon Resource Name (ARN) ID.
     Type: String
 
