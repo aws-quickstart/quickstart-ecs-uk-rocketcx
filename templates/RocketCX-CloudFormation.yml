@@ -25,17 +25,17 @@ Metadata:
           - CallRecordingS3BucketName
     ParameterLabels:
       AmazonConnectInstanceID:
-        default: "Amazon Connect instance ID for integration with ServiceNow"
+        default: "Amazon Connect ID"
       ServiceNowHostURL:
-        default: "ServiceNow instance URL for lambda data dip"
+        default: "ServiceNow URL"
       ServiceNowUserName:
-        default: "ServiceNow instance user name for lambda data dip"
+        default: "ServiceNow user name"
       ServiceNowPassword:
-        default: "ServiceNow instance user password for lambda data dip"
+        default: "ServiceNow user password"
       IAMUserName:
-        default: "IAM user name to access Amazon Connect stats and call recordings"
+        default: "Amazon Connect user name"
       CallRecordingS3BucketName:
-        default: "Amazon Connect call recording S3 bucket name"
+        default: "Amazon Connect S3 bucket"
       
 
 Parameters:
