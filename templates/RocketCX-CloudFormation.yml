@@ -41,30 +41,31 @@ Metadata:
 Parameters:
 
   AmazonConnectInstanceID:
-    Description: Amazon Connect instance ID (36 char long unique ID from Amazon Connect ARN)
-    Type: String
-
-  ServiceNowUserName:
-    Description: The name of user having API invoke access permissions on ServiceNow instance
-    Type: String
-
-  ServiceNowPassword:
-    Description: The password of user having API invoke access permissions on ServiceNow instance
-    NoEcho: true
+    Description: Amazon Connect instance ID for integration with ServiceNow (maximum of 36 alphanumeric characters. This
+                 ID is different from the Amazon Resource Name (ARN) ID.
     Type: String
 
   ServiceNowHostURL:
     AllowedPattern: ^https[://]+[a-zA-Z0-9-.]+[.]service-now.com/$
     ConstraintDescription: Endpoint must be a valid ServiceNow API Host URI.
-    Description: Sample ServiceNow instance URL (https://example.service-now.com/)
+    Description: Sample ServiceNow instance URL for Lambda data dip (https://example.service-now.com/).
+    Type: String
+    
+  ServiceNowUserName:
+    Description: ServiceNow user name for Lambda data dip. The user must have API-invoke access permissions for the ServiceNow instance.
+    Type: String
+
+  ServiceNowPassword:
+    Description: ServiceNow password for Lambda data dip. The user must have API-invoke access permissions for the ServiceNow instance.
+    NoEcho: true
     Type: String
 
   IAMUserName:
-    Description: (Optional) The name of IAM user used for accessing Amazon Connect stats and call recordings
+    Description: (Optional) Name of IAM user for accessing Amazon Connect statistics and call recordings.
     Type: String
 
   CallRecordingS3BucketName:
-    Description: (Optional) The name of S3 bucket that stores Amazon Connect call recordings
+    Description: (Optional) Name of S3 bucket that stores Amazon Connect call recordings.
     Type: String
 
 
