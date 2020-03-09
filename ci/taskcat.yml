@@ -11,4 +11,4 @@ global:
 tests:
   rocketcx-quickstart-deployment:
     parameter_input: rocketcx-quickstart-param.json
-    template_file: rocketcx-cloudformation.yml
+    template_file: RocketCX-CloudFormation.yml
