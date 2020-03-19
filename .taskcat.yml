@@ -1,12 +1,11 @@
 project:
-  name: quickstart-ecs-uk-rocketcx
+  name: connect-integration-ecs-uk-rocketcx
   owner: quickstart-eng@amazon.com
   package_lambda: false
   regions:
     - us-east-1
-  s3_bucket: ''
 tests:
-  quickstart-eng@amazon.com:
+  connect-integration-ecs-uk-rocketcx:
     parameters:
       AmazonConnectInstanceID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
       CallRecordingS3BucketName: ''
@@ -16,5 +15,4 @@ tests:
       ServiceNowUserName: dummy.user
     regions:
       - us-east-1
-    s3_bucket: ''
     template: templates/rocketcx-cloudformation.yml
