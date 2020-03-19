@@ -1,9 +1,11 @@
 project:
   name: connect-integration-ecs-uk-rocketcx
-  owner: quickstart-eng@amazon.com
   package_lambda: false
   regions:
+    - eu-west-1
     - us-east-1
+    - us-east-2
+    - ap-south-1
 tests:
   connect-integration-ecs-uk-rocketcx:
     parameters:
@@ -15,4 +17,8 @@ tests:
       ServiceNowUserName: dummy.user
     regions:
       - us-east-1
+      - eu-west-1
+      - us-east-1
+      - us-east-2
+      - ap-south-1
     template: templates/rocketcx-cloudformation.yml

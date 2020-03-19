@@ -1,6 +1,5 @@
 global:
-  owner: connect-integration-ecs-uk-rocketcx
-  qsname: quickstart-eng@amazon.com
+  qsname: connect-integration-ecs-uk-rocketcx
   regions:
     #- eu-west-1
     - us-east-1
