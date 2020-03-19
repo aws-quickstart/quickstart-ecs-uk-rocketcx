@@ -1,6 +1,6 @@
 global:
-  owner: ashpak.mulani@ecs.co.uk
-  qsname: rocketcx-quickstart-deployment
+  owner: quickstart-ecs-uk-rocketcx
+  qsname: quickstart-eng@amazon.com
   regions:
     #- eu-west-1
     - us-east-1
@@ -8,6 +8,6 @@ global:
     #- ap-south-1
   reporting: true
 tests:
-  rocketcx-quickstart-deployment:
+  quickstart-eng@amazon.com:
     parameter_input: rocketcx-quickstart-param.json
     template_file: rocketcx-cloudformation.yml
