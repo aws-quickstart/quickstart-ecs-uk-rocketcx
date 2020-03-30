@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 
-Description: RocketCX Enterprise Connector for ServiceNow Quickstart.
+Description: RocketCX Enterprise Connector for ServiceNow Quickstart. (qs-1qji34a8u)
 
 Transform: AWS::Serverless-2016-10-31
 
