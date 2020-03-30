@@ -10,8 +10,8 @@ tests:
   connect-integration-ecs-uk-rocketcx:
     parameters:
       AmazonConnectInstanceID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-      CallRecordingS3BucketName: ''
-      IAMUserName: ''
+      CallRecordingS3BucketName: ""
+      IAMUserName: ""
       ServiceNowHostURL: https://dummyservicenow.service-now.com/
       ServiceNowPassword: dummypassword
       ServiceNowUserName: dummy.user
@@ -21,4 +21,4 @@ tests:
       - us-east-1
       - us-east-2
       - ap-south-1
-    template: templates/rocketcx-cloudformation.yml
+    template: templates/rocketcx.template.yaml
